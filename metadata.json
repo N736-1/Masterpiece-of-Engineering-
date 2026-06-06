@@ -1,0 +1,6 @@
+{
+  "name": "Helium DB",
+  "description": "PostgreSQL Database Client & AI Query Console",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
