@@ -38,14 +38,14 @@ class HeliumDbViewModel(
     val queryHistory: StateFlow<List<QueryHistoryItem>> = repository.allHistory
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _hostInput = MutableStateFlow("helium-heliumdb-sslmod--fazalnaeem47870.replit.app")
+    private val _hostInput = MutableStateFlow("postgresqlpostgrespasswordheliumheliumdbsslmod--fazalnaeem47870.replit.app")
     val hostInput = _hostInput.asStateFlow()
 
     val portInput = MutableStateFlow("5432")
     val dbInput = MutableStateFlow("heliumdb")
     val userInput = MutableStateFlow("postgres")
     val passInput = MutableStateFlow("password")
-    val sslInput = MutableStateFlow("require")
+    val sslInput = MutableStateFlow("disable")
     val profileNameInput = MutableStateFlow("Helium Database")
 
     private val _activeTab = MutableStateFlow("connections")
@@ -94,26 +94,14 @@ class HeliumDbViewModel(
                     repository.insertProfile(
                         ConnectionProfile(
                             name = "Helium Cloud (Quickstart)",
-                            host = "helium-heliumdb-sslmod--fazalnaeem47870.replit.app",
+                            host = "postgresqlpostgrespasswordheliumheliumdbsslmod--fazalnaeem47870.replit.app",
                             port = 5432,
                             database = "heliumdb",
                             username = "postgres",
                             password = "password",
-                            sslMode = "require"
+                            sslMode = "disable"
                         )
                     )
-                } else {
-                    // Automatically migrate any old broken host to the correct one!
-                    list.forEach { profile ->
-                        if (profile.host == "postgresqlpostgrespasswordheliumheliumdbsslmod--fazalnaeem47870.replit.app") {
-                            repository.insertProfile(
-                                profile.copy(
-                                    host = "helium-heliumdb-sslmod--fazalnaeem47870.replit.app",
-                                    sslMode = "require"
-                                )
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -123,97 +111,7 @@ class HeliumDbViewModel(
         _activeTab.value = tab
     }
 
-    fun updateHost(value: String) {
-        val trimmed = value.trim()
-        if (trimmed.startsWith("postgresql://") || trimmed.startsWith("postgres://") || trimmed.startsWith("jdbc:postgresql://")) {
-            parseAndPopulateUri(trimmed)
-        } else {
-            _hostInput.value = value
-        }
-    }
-
-    private fun parseAndPopulateUri(uri: String) {
-        try {
-            var cleanUri = uri.trim()
-            if (cleanUri.startsWith("jdbc:")) {
-                cleanUri = cleanUri.substring(5)
-            }
-            
-            val isPostgresql = cleanUri.startsWith("postgresql://")
-            val isPostgres = cleanUri.startsWith("postgres://")
-            
-            if (!isPostgresql && !isPostgres) {
-                _hostInput.value = uri
-                return
-            }
-            
-            val prefix = if (isPostgresql) "postgresql://" else "postgres://"
-            val mainPart = cleanUri.substring(prefix.length)
-            
-            // Format can be: [user[:password]@]host[:port][/database][?query_params]
-            val queryIdx = mainPart.indexOf('?')
-            val connectionPart = if (queryIdx != -1) {
-                val queryParams = mainPart.substring(queryIdx + 1)
-                queryParams.split('&').forEach { param ->
-                    val pair = param.split('=')
-                    if (pair.size == 2) {
-                        val k = pair[0].lowercase().trim()
-                        val v = pair[1].trim()
-                        if (k == "sslmode") {
-                            sslInput.value = v
-                        } else if (k == "ssl") {
-                            sslInput.value = if (v == "true") "require" else "disable"
-                        } else if (k == "user" || k == "username") {
-                            userInput.value = v
-                        } else if (k == "password") {
-                            passInput.value = v
-                        }
-                    }
-                }
-                mainPart.substring(0, queryIdx)
-            } else {
-                mainPart
-            }
-            
-            val atIdx = connectionPart.lastIndexOf('@')
-            val hostAndPortAndDb = if (atIdx != -1) {
-                val userAndPass = connectionPart.substring(0, atIdx)
-                val colonIdx = userAndPass.indexOf(':')
-                if (colonIdx != -1) {
-                    userInput.value = userAndPass.substring(0, colonIdx)
-                    passInput.value = userAndPass.substring(colonIdx + 1)
-                } else {
-                    userInput.value = userAndPass
-                }
-                connectionPart.substring(atIdx + 1)
-            } else {
-                connectionPart
-            }
-            
-            val slashIdx = hostAndPortAndDb.indexOf('/')
-            val hostAndPort = if (slashIdx != -1) {
-                dbInput.value = hostAndPortAndDb.substring(slashIdx + 1)
-                hostAndPortAndDb.substring(0, slashIdx)
-            } else {
-                hostAndPortAndDb
-            }
-            
-            val hostColonIdx = hostAndPort.indexOf(':')
-            if (hostColonIdx != -1) {
-                _hostInput.value = hostAndPort.substring(0, hostColonIdx)
-                portInput.value = hostAndPort.substring(hostColonIdx + 1)
-            } else {
-                _hostInput.value = hostAndPort
-                portInput.value = "5432"
-            }
-            
-            if (profileNameInput.value.isBlank() || profileNameInput.value == "Helium Database") {
-                profileNameInput.value = "Parsed Connection"
-            }
-        } catch (e: Exception) {
-            _hostInput.value = uri
-        }
-    }
+    fun updateHost(value: String) { _hostInput.value = value }
     fun updateQueryInput(value: String) { _consoleQueryInput.value = value }
     fun updateGeminiPrompt(value: String) { _geminiPromptInput.value = value }
 
