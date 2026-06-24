@@ -398,6 +398,13 @@ fun ConnectionScreen(viewModel: HeliumDbViewModel) {
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Tip: You can paste a full PostgreSQL connection URI (e.g. postgresql://...) directly into the Database Host field to automatically parse and fill out this entire form.",
+                        color = Color.Gray,
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
