@@ -48,6 +48,7 @@ import com.example.data.local.ConnectionProfile
 import com.example.data.local.DatabaseRepository
 import com.example.data.local.HeliumDatabase
 import com.example.data.local.QueryHistoryItem
+import com.example.ui.SecureConnectionForm
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.ConnectionState
 import com.example.viewmodel.HeliumDbViewModel
@@ -352,8 +353,6 @@ fun ConnectionScreen(viewModel: HeliumDbViewModel) {
     val nameInput by viewModel.profileNameInput.collectAsStateWithLifecycle()
     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
 
-    var showPass by remember { mutableStateOf(false) }
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -387,183 +386,36 @@ fun ConnectionScreen(viewModel: HeliumDbViewModel) {
 
         // Setup Form Card
         item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF16191E)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "New Connection Profile",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+            SecureConnectionForm(
+                profileName = nameInput,
+                onProfileNameChange = { viewModel.profileNameInput.value = it },
+                host = hostInput,
+                onHostChange = { viewModel.updateHost(it) },
+                port = portInput,
+                onPortChange = { viewModel.portInput.value = it },
+                database = dbInput,
+                onDatabaseChange = { viewModel.dbInput.value = it },
+                username = userInput,
+                onUsernameChange = { viewModel.userInput.value = it },
+                password = passInput,
+                onPasswordChange = { viewModel.passInput.value = it },
+                sslMode = sslInput,
+                onSslModeChange = { viewModel.sslInput.value = it },
+                onSaveProfile = { viewModel.saveProfile() },
+                onConnect = {
+                    val current = ConnectionProfile(
+                        name = nameInput,
+                        host = hostInput.trim(),
+                        port = portInput.toIntOrNull() ?: 5432,
+                        database = dbInput.trim(),
+                        username = userInput.trim(),
+                        password = passInput,
+                        sslMode = sslInput
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = nameInput,
-                        onValueChange = { viewModel.profileNameInput.value = it },
-                        label = { Text("Profile Name") },
-                        modifier = Modifier.fillMaxWidth().testTag("profile_name_field"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFFFF9800),
-                            unfocusedBorderColor = Color.DarkGray
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = hostInput,
-                        onValueChange = { viewModel.updateHost(it) },
-                        label = { Text("Database Host") },
-                        modifier = Modifier.fillMaxWidth().testTag("host_field"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFFFF9800),
-                            unfocusedBorderColor = Color.DarkGray
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = portInput,
-                            onValueChange = { viewModel.portInput.value = it },
-                            label = { Text("Port") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f).testTag("port_field"),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedBorderColor = Color(0xFFFF9800),
-                                unfocusedBorderColor = Color.DarkGray
-                            )
-                        )
-                        OutlinedTextField(
-                            value = dbInput,
-                            onValueChange = { viewModel.dbInput.value = it },
-                            label = { Text("Database Name") },
-                            modifier = Modifier.weight(2f).testTag("db_field"),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedBorderColor = Color(0xFFFF9800),
-                                unfocusedBorderColor = Color.DarkGray
-                            )
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = userInput,
-                        onValueChange = { viewModel.userInput.value = it },
-                        label = { Text("User") },
-                        modifier = Modifier.fillMaxWidth().testTag("user_field"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFFFF9800),
-                            unfocusedBorderColor = Color.DarkGray
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = passInput,
-                        onValueChange = { viewModel.passInput.value = it },
-                        label = { Text("Password") },
-                        visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            IconButton(onClick = { showPass = !showPass }) {
-                                Icon(
-                                    imageVector = if (showPass) Icons.Default.Info else Icons.Default.Search,
-                                    contentDescription = "Toggle password visibility",
-                                    tint = Color.LightGray
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().testTag("password_field"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color(0xFFFF9800),
-                            unfocusedBorderColor = Color.DarkGray
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text("SSL Mode", color = Color.Gray, fontSize = 11.sp)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf("disable", "require", "prefer").forEach { mode ->
-                            Button(
-                                onClick = { viewModel.sslInput.value = mode },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (sslInput == mode) Color(0xFFFF9800) else Color(0xFF23272F)
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    text = mode,
-                                    color = if (sslInput == mode) Color.Black else Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                viewModel.saveProfile()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C323D)),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Save Profile", color = Color.White)
-                        }
-
-                        Button(
-                            onClick = {
-                                val current = ConnectionProfile(
-                                    name = nameInput,
-                                    host = hostInput.trim(),
-                                    port = portInput.toIntOrNull() ?: 5432,
-                                    database = dbInput.trim(),
-                                    username = userInput.trim(),
-                                    password = passInput,
-                                    sslMode = sslInput
-                                )
-                                viewModel.connectToProfile(current)
-                            },
-                            enabled = connectionState !is ConnectionState.Connecting,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f).testTag("connect_btn")
-                        ) {
-                            Text("Connect", color = Color.Black, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
+                    viewModel.connectToProfile(current)
+                },
+                isConnecting = connectionState is ConnectionState.Connecting
+            )
         }
 
         // Saved Connections Header
